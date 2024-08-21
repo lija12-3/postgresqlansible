@@ -1,0 +1,64 @@
+---
+- name: Install PostgreSQL latest version on Debian-based systems
+  hosts: debian_servers
+  become: yes
+
+  tasks:
+    - name: Install prerequisites
+      apt:
+        name:
+          - curl
+          - ca-certificates
+        state: present
+
+    - name: Install postgresql-common package
+      apt:
+        name: postgresql-common
+        state: present
+
+    - name: Ensure the pgdg directory exists
+      file:
+        path: /usr/share/postgresql-common/pgdg
+        state: directory
+
+    - name: Download the PostgreSQL repository key
+      get_url:
+        url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+        dest: /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc
+        mode: '0644'
+
+    - name: Add PostgreSQL APT repository
+      apt_repository:
+        repo: "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main"
+        state: present
+        update_cache: yes
+
+    - name: Get the latest PostgreSQL version available
+      shell: "apt-cache madison postgresql | grep -oP '(?<=postgresql-)[0-9.]+' | head -1"
+      register: latest_pg_version
+      changed_when: false
+
+    - name: Install the latest PostgreSQL version
+      apt:
+        name: "postgresql-{{ latest_pg_version.stdout }}"
+        state: present
+        update_cache: yes
+
+    - name: Ensure PostgreSQL service is enabled and started
+      service:
+        name: postgresql
+        state: started
+        enabled: yes
+
+    - name: Set PostgreSQL to listen on the configured IP address
+      lineinfile:
+        path: "/etc/postgresql/{{ latest_pg_version.stdout }}/main/postgresql.conf"
+        regexp: '^#?listen_addresses ='
+        line: "listen_addresses = '{{ postgresql_listen_address }}'"
+      notify: Restart PostgreSQL
+
+  handlers:
+    - name: Restart PostgreSQL
+      service:
+        name: postgresql
+        state: restarted
