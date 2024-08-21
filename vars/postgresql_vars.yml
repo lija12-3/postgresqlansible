@@ -1,0 +1,3 @@
+---
+# PostgreSQL Configuration Variables for Debian Servers
+postgresql_listen_address: '0.0.0.0'  # Change to your desired IP address or '*'
