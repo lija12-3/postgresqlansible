@@ -2,6 +2,8 @@
 - name: Install PostgreSQL latest version on Debian-based systems
   hosts: debian_servers
   become: yes
+  vars_files:
+    - vars/postgresql_vars.yml  # Include this if you have additional variables to manage
 
   tasks:
     - name: Install prerequisites
@@ -38,8 +40,17 @@
       register: latest_pg_version
       changed_when: false
 
-    - debug:
+    - name: Debug PostgreSQL version
+      debug:
         var: latest_pg_version.stdout
+
+    - name: Set the correct PostgreSQL version path
+      set_fact:
+        pg_conf_path: "/etc/postgresql/{{ latest_pg_version.stdout | trim }}/main/postgresql.conf"
+
+    - name: Debug PostgreSQL config path
+      debug:
+        var: pg_conf_path
 
     - name: Install the latest PostgreSQL version
       apt:
@@ -56,7 +67,7 @@
 
     - name: Set PostgreSQL to listen on the configured IP address
       lineinfile:
-        path: "/etc/postgresql/{{ latest_pg_version.stdout | trim }}/main/postgresql.conf"
+        path: "{{ pg_conf_path }}"
         regexp: '^#?listen_addresses ='
         line: "listen_addresses = '{{ postgresql_listen_address }}'"
       notify: Restart PostgreSQL
