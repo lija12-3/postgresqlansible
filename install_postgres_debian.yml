@@ -43,7 +43,7 @@
 
     - name: Install the latest PostgreSQL version
       apt:
-        name: "postgresql-{{ latest_pg_version.stdout }}"
+        name: "postgresql-{{ latest_pg_version.stdout | trim }}"
         state: present
         update_cache: yes
       when: latest_pg_version.stdout != ""
@@ -56,7 +56,7 @@
 
     - name: Set PostgreSQL to listen on the configured IP address
       lineinfile:
-        path: "/etc/postgresql/{{ latest_pg_version.stdout }}/main/postgresql.conf"
+        path: "/etc/postgresql/{{ latest_pg_version.stdout | trim }}/main/postgresql.conf"
         regexp: '^#?listen_addresses ='
         line: "listen_addresses = '{{ postgresql_listen_address }}'"
       notify: Restart PostgreSQL
