@@ -1,3 +1,5 @@
 ---
-# PostgreSQL Configuration Variables for Debian Servers
+# Group variables for Debian servers
+postgresql_version: latest  # Set to a specific version like '13', '14', etc., or 'latest'
 postgresql_listen_address: '0.0.0.0'  # Change to your desired IP address or '*'
+
