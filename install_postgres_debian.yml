@@ -38,11 +38,15 @@
       register: latest_pg_version
       changed_when: false
 
+    - debug:
+        var: latest_pg_version.stdout
+
     - name: Install the latest PostgreSQL version
       apt:
         name: "postgresql-{{ latest_pg_version.stdout }}"
         state: present
         update_cache: yes
+      when: latest_pg_version.stdout != ""
 
     - name: Ensure PostgreSQL service is enabled and started
       service:
