@@ -1,12 +1,12 @@
 ---
-- name: Install PostgreSQL latest version on Debian-based systems
+- name: Install PostgreSQL on Debian-based systems
   hosts: debian_servers
   become: yes
   vars_files:
-    - vars/postgresql_vars.yml  # Include this if you have additional variables to manage
+    - vars/postgresql_vars.yml  # Optional, if you have additional variables
 
   tasks:
-    - name: Install prerequisites
+    - name: Install prerequisites (curl and ca-certificates)
       apt:
         name:
           - curl
@@ -35,29 +35,31 @@
         state: present
         update_cache: yes
 
+    - name: Update APT cache
+      apt:
+        update_cache: yes
+
     - name: Get the latest PostgreSQL version available
       shell: "apt-cache madison postgresql | grep -oP '(?<=postgresql-)[0-9.]+' | head -1"
       register: latest_pg_version
       changed_when: false
+      when: postgresql_version == 'latest'
 
     - name: Debug PostgreSQL version
       debug:
         var: latest_pg_version.stdout
+      when: postgresql_version == 'latest'
 
-    - name: Set the correct PostgreSQL version path
+    - name: Set the PostgreSQL package name
       set_fact:
-        pg_conf_path: "/etc/postgresql/{{ latest_pg_version.stdout | trim }}/main/postgresql.conf"
+        pg_package_name: "postgresql-{{ latest_pg_version.stdout | trim }}"
+      when: postgresql_version == 'latest'
 
-    - name: Debug PostgreSQL config path
-      debug:
-        var: pg_conf_path
-
-    - name: Install the latest PostgreSQL version
+    - name: Install PostgreSQL
       apt:
-        name: "postgresql-{{ latest_pg_version.stdout | trim }}"
+        name: "{{ pg_package_name if postgresql_version == 'latest' else 'postgresql-' + postgresql_version }}"
         state: present
-        update_cache: yes
-      when: latest_pg_version.stdout != ""
+      when: postgresql_version != 'latest' or (postgresql_version == 'latest' and latest_pg_version.stdout != "")
 
     - name: Ensure PostgreSQL service is enabled and started
       service:
@@ -67,7 +69,7 @@
 
     - name: Set PostgreSQL to listen on the configured IP address
       lineinfile:
-        path: "{{ pg_conf_path }}"
+        path: "/etc/postgresql/{{ latest_pg_version.stdout | trim }}/main/postgresql.conf"
         regexp: '^#?listen_addresses ='
         line: "listen_addresses = '{{ postgresql_listen_address }}'"
       notify: Restart PostgreSQL
