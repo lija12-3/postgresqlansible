@@ -24,19 +24,16 @@
       file:
         path: /var/lib/postgresql
         state: absent
-       
 
     - name: Remove PostgreSQL configuration files
       file:
         path: /etc/postgresql
         state: absent
-        
 
     - name: Remove PostgreSQL log files
       file:
         path: /var/log/postgresql
         state: absent
-        
 
     - name: Remove PostgreSQL APT source list
       file:
@@ -48,7 +45,12 @@
         path: /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc
         state: absent
 
-    - name: Remove PostgreSQL APT repository key
+    - name: Ensure gpg is installed
+      apt:
+        name: gpg
+        state: present
+
+    - name: Remove PostgreSQL APT repository key from apt-key
       apt_key:
         id: ACCC4CF8
         state: absent
