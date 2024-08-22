@@ -24,19 +24,19 @@
       file:
         path: /var/lib/postgresql
         state: absent
-        recurse: yes
+        
 
     - name: Remove PostgreSQL configuration files
       file:
         path: /etc/postgresql
         state: absent
-        recurse: yes
+        
 
     - name: Remove PostgreSQL log files
       file:
         path: /var/log/postgresql
         state: absent
-        recurse: yes
+        
 
     - name: Remove PostgreSQL APT source list
       file:
