@@ -24,7 +24,7 @@
       file:
         path: /var/lib/postgresql
         state: absent
-        recurse: yes
+       
 
     - name: Remove PostgreSQL configuration files
       file:
