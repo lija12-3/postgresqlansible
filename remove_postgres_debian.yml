@@ -3,10 +3,16 @@
   become: yes
 
   tasks:
+    - name: Check if PostgreSQL service exists
+      shell: systemctl list-units --type=service --all | grep postgresql
+      register: postgresql_service_check
+      ignore_errors: yes
+
     - name: Stop PostgreSQL service if it exists
       service:
         name: postgresql
         state: stopped
+      when: postgresql_service_check.rc == 0
       ignore_errors: yes  # Continue even if the service is not found
 
     - name: Remove PostgreSQL and related packages
