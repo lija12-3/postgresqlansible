@@ -1,8 +1,14 @@
-- name: Remove PostgreSQL from Debian-based systems
+- name: Ensure PostgreSQL is completely removed from Debian-based systems
   hosts: debian_servers
   become: yes
 
   tasks:
+    - name: Stop PostgreSQL service
+      service:
+        name: postgresql
+        state: stopped
+      ignore_errors: yes
+
     - name: Remove PostgreSQL and related packages
       apt:
         name: 
@@ -10,8 +16,9 @@
           - postgresql-common
           - postgresql-client
           - postgresql-contrib
+          - libpq-dev
         state: absent
-        purge: yes  # Optional: Use purge to remove configuration files as well
+        purge: yes
 
     - name: Remove PostgreSQL data directory
       file:
@@ -22,3 +29,33 @@
       file:
         path: /etc/postgresql
         state: absent
+
+    - name: Remove PostgreSQL log files
+      file:
+        path: /var/log/postgresql
+        state: absent
+
+    - name: Remove PostgreSQL APT source list
+      file:
+        path: /etc/apt/sources.list.d/pgdg.list
+        state: absent
+
+    - name: Remove APT repository key for PostgreSQL
+      apt_key:
+        id: ACCC4CF8
+        state: absent
+
+    - name: Update APT cache
+      apt:
+        update_cache: yes
+
+    - name: Check if PostgreSQL command is still accessible
+      shell: psql --version
+      register: psql_check
+      ignore_errors: yes
+
+    - name: Fail if PostgreSQL is still accessible
+      fail:
+        msg: "PostgreSQL is still accessible!"
+      when: psql_check.rc == 0
+
