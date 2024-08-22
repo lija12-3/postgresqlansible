@@ -58,7 +58,7 @@
       file:
         path: /usr/share/postgresql-common/pgdg
         state: absent
-        recurse: yes
+       
 
     - name: Remove PostgreSQL binaries if found
       file:
