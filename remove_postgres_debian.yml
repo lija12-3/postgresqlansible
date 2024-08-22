@@ -30,7 +30,7 @@
       file:
         path: /etc/postgresql
         state: absent
-        recurse: yes
+        
 
     - name: Remove PostgreSQL log files
       file:
