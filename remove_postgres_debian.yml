@@ -36,7 +36,7 @@
       file:
         path: /var/log/postgresql
         state: absent
-        recurse: yes
+        
 
     - name: Remove PostgreSQL APT source list
       file:
