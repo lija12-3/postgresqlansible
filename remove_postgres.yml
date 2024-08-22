@@ -1,0 +1,26 @@
+- name: Remove PostgreSQL from Debian-based systems
+  hosts: debian_servers
+  become: yes
+
+  tasks:
+    - name: Remove PostgreSQL and related packages
+      apt:
+        name: 
+          - postgresql
+          - postgresql-common
+          - postgresql-client
+          - postgresql-contrib
+        state: absent
+        purge: yes  # Optional: Use purge to remove configuration files as well
+
+    - name: Remove PostgreSQL data directory
+      file:
+        path: /var/lib/postgresql
+        state: absent
+        recurse: yes
+
+    - name: Remove PostgreSQL configuration files
+      file:
+        path: /etc/postgresql
+        state: absent
+        recurse: yes
