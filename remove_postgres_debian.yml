@@ -3,16 +3,10 @@
   become: yes
 
   tasks:
-    - name: Check if PostgreSQL service exists
-      shell: systemctl list-units --type=service --all | grep postgresql
-      register: postgresql_service_check
-      ignore_errors: yes
-
     - name: Stop PostgreSQL service if it exists
       service:
         name: postgresql
         state: stopped
-      when: postgresql_service_check.rc == 0
       ignore_errors: yes  # Continue even if the service is not found
 
     - name: Remove PostgreSQL and related packages
@@ -30,16 +24,19 @@
       file:
         path: /var/lib/postgresql
         state: absent
+        recurse: yes
 
     - name: Remove PostgreSQL configuration files
       file:
         path: /etc/postgresql
         state: absent
+        recurse: yes
 
     - name: Remove PostgreSQL log files
       file:
         path: /var/log/postgresql
         state: absent
+        recurse: yes
 
     - name: Remove PostgreSQL APT source list
       file:
@@ -51,12 +48,7 @@
         path: /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc
         state: absent
 
-    - name: Ensure gpg is installed
-      apt:
-        name: gpg
-        state: present
-
-    - name: Remove PostgreSQL APT repository key from apt-key
+    - name: Remove PostgreSQL APT repository key
       apt_key:
         id: ACCC4CF8
         state: absent
@@ -66,17 +58,40 @@
       file:
         path: /usr/share/postgresql-common/pgdg
         state: absent
+        recurse: yes
+
+    - name: Remove PostgreSQL binaries if found
+      file:
+        path: /usr/local/bin/psql  # Adjust this path based on your search results
+        state: absent
+      ignore_errors: yes
+
+    - name: Remove any additional PostgreSQL installation paths
+      file:
+        path: /opt/postgresql  # Example path; adjust as necessary
+        state: absent
+        recurse: yes
+      ignore_errors: yes
 
     - name: Update APT cache
       apt:
         update_cache: yes
 
-    - name: Check if PostgreSQL command is still accessible
-      shell: psql --version
+    - name: Restart the server to ensure all services are stopped
+      reboot:
+        msg: "Rebooting the server to finalize PostgreSQL removal"
+        connect_timeout: 5
+        reboot_timeout: 600
+        pre_reboot_delay: 0
+        post_reboot_delay: 30
+
+    - name: Verify PostgreSQL is no longer accessible
+      shell: "which psql"
       register: psql_check
+      changed_when: false
       ignore_errors: yes
 
-    - name: Fail if PostgreSQL is still accessible
+    - name: Confirm PostgreSQL is not found
       fail:
         msg: "PostgreSQL is still accessible!"
-      when: psql_check.rc == 0
+      when: psql_check.stdout != ""
