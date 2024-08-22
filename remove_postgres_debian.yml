@@ -70,7 +70,7 @@
       file:
         path: /opt/postgresql  # Example path; adjust as necessary
         state: absent
-        recurse: yes
+        
       ignore_errors: yes
 
     - name: Update APT cache
