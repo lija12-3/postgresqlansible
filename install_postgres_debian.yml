@@ -11,45 +11,65 @@
           - curl
           - ca-certificates
         state: present
+      # Ensure that necessary packages for the installation process are present on the system.
 
     - name: Ensure sudo is installed
       apt:
         name: sudo
         state: present
+      # Install 'sudo' if it's not already installed to ensure that commands requiring elevated privileges can be executed.
 
     - name: Install postgresql-common package
       apt:
         name: postgresql-common
         state: present
+      # Install the 'postgresql-common' package, which provides common files and utilities for managing PostgreSQL installations.
 
     - name: Ensure the pgdg directory exists
       file:
         path: /usr/share/postgresql-common/pgdg
         state: directory
+      # Create the directory for storing the PostgreSQL APT repository key if it does not already exist.
 
     - name: Download the PostgreSQL repository key
       get_url:
         url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
         dest: /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc
         mode: '0644'
+      # Download the PostgreSQL repository signing key to ensure the authenticity of packages.
 
     - name: Add PostgreSQL APT repository
       command: >
         sh -c 'echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
       args:
         creates: /etc/apt/sources.list.d/pgdg.list
+      # Add the PostgreSQL APT repository to the system's sources list to enable the installation of PostgreSQL packages.
 
     - name: Update APT cache
       apt:
         update_cache: yes
+      # Update the package index cache to ensure the latest package information is available before installation.
 
     - name: Install PostgreSQL
       apt:
         name: postgresql
         state: present
+      # Install the PostgreSQL database server.
+
+    - name: Display PostgreSQL version
+      command: psql --version
+      register: postgres_version
+      changed_when: false
+      # Run the psql command to display the installed PostgreSQL version and store the result in a variable.
+
+    - name: Print PostgreSQL version
+      debug:
+        msg: "PostgreSQL version: {{ postgres_version.stdout }}"
+      # Print the PostgreSQL version to the Ansible output.
 
   handlers:
     - name: Restart PostgreSQL
       service:
         name: postgresql
         state: restarted
+      # Restart the PostgreSQL service to apply any changes made during installation.
