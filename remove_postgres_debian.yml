@@ -12,9 +12,10 @@
     - name: Remove PostgreSQL and related packages
       apt:
         name: 
-          - postgresql
+          - postgresql-16
+          - postgresql-client-16
+          - postgresql-client-common
           - postgresql-common
-          - postgresql-client
           - postgresql-contrib
           - libpq-dev
         state: absent
@@ -24,19 +25,16 @@
       file:
         path: /var/lib/postgresql
         state: absent
-        
 
     - name: Remove PostgreSQL configuration files
       file:
         path: /etc/postgresql
         state: absent
-        
 
     - name: Remove PostgreSQL log files
       file:
         path: /var/log/postgresql
         state: absent
-        
 
     - name: Remove PostgreSQL APT source list
       file:
@@ -58,7 +56,6 @@
       file:
         path: /usr/share/postgresql-common/pgdg
         state: absent
-       
 
     - name: Remove PostgreSQL binaries if found
       file:
@@ -70,7 +67,6 @@
       file:
         path: /opt/postgresql  # Example path; adjust as necessary
         state: absent
-        
       ignore_errors: yes
 
     - name: Update APT cache
